@@ -64,6 +64,7 @@ class PaymentAcquirer(models.Model):
             response.raise_for_status()
         except requests.exceptions.RequestException:
             _logger.exception("Unable to communicate with Flutterwave: %s", url)
+            _logger.exception("response: %s", response.json().get('message'))
             raise ValidationError("Flutterwave: " + _("Could not establish the connection to the API."))
         return response.json()
 
@@ -84,8 +85,20 @@ class PaymentAcquirer(models.Model):
             response = requests.request(method, url, data=None, headers=headers, timeout=60)
             response.raise_for_status()
         except requests.exceptions.RequestException:
-            _logger.exception("Unable to communicate with Flutterwave: %s", url)
-            raise ValidationError("Flutterwave: " + _("Could not establish the connection to the API."))
+            transaction_not_found_msg = 'No transaction was found for this id'
+            if 'message' in response.json() and response.json().get('message') == transaction_not_found_msg:
+                return {
+                    "data": {
+                        "status": "not-found",
+                        "currency" : None,
+                        "amount": None
+                    }
+                }
+            else:
+                _logger.exception("Unable to communicate with Flutterwave: %s", url)
+                # _logger.exception("response: %s", response.json())
+                # _logger.exception("response: %s", response.json().get('message'))
+                raise ValidationError("Flutterwave: " + _("Could not establish the connection to the API."))
         return response.json()
 
 

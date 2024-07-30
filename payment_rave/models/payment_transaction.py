@@ -109,7 +109,7 @@ class PaymentTransaction(models.Model):
 
         if payment_status == 'successful' and self.amount == amount and self.currency_id.name == currency:
             self._set_done()
-        elif payment_status in ['cancelled', 'failed']:
+        elif payment_status in ['cancelled', 'failed', 'not-found']:
             self._set_canceled("Flutterwave: " + _("Canceled payment with status: %s", payment_status))
         elif payment_status == 'successful' and self.amount != amount or payment_status == 'successful' and self.currency_id.name != currency:
             _logger.info("Successful Partial Payment Made: %s", payment_status)
